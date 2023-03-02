@@ -43,17 +43,19 @@ class RepositoriesTests @Autowired constructor(
     }
 
     @Test
-    fun `When findByNameStartingWith then return list of authors with startsWith condition`() {
-        val author1 = Author(name = "author1")
-        val author2 = Author(name = "author2")
-        val author3 = Author(name = "another_prefix_author3")
+    fun `When findByNameContaining then return list of authors with containing condition`() {
+        val author1 = Author(name = "hit-suffix")
+        val author2 = Author(name = "prefix-hit-suffix")
+        val author3 = Author(name = "prefix-hit")
+        val author4 = Author(name = "not-match")
         entityManager.persist(author1)
         entityManager.persist(author2)
         entityManager.persist(author3)
+        entityManager.persist(author4)
         entityManager.flush()
 
-        val found = authorRepository.findByNameStartingWith("author")
-        assertThat(found).isEqualTo(listOf(author1, author2))
+        val found = authorRepository.findByNameContaining("hit")
+        assertThat(found).isEqualTo(listOf(author1, author2, author3))
     }
 
     @Test

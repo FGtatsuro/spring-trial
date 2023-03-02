@@ -14,7 +14,9 @@ interface BookRepository : CrudRepository<Book, Long> {
 }
 
 interface AuthorRepository : CrudRepository<Author, Long> {
-    fun findByNameStartingWith(name: String): List<Author>
+    // NOTE: Performance issue may occur on growing data.
+    // Containing(=LIKE %(string)%) can't use database index.
+    fun findByNameContaining(name: String): List<Author>
 
     // NOTE: Performance issue may occur on growing data.
     // Containing(=LIKE %(string)%) can't use database index.
