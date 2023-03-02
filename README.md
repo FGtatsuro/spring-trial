@@ -8,53 +8,41 @@ Trial of Spring Framework
 - OpenJDK (19.0.2)
 - Kotlin (1.8.10-release-430)
 
-## API samples
+## API
 
-### Creation
-
-Book
+### 書籍登録
 
 ```bash
-$ curl -s -X POST http://localhost:8080/api/books -H "Content-Type:application/json" -d '{"title": "book1"}'
+$ curl -s -X POST http://localhost:8080/api/books -H "Content-Type:application/json" \
+   -d '{"title": "サンプルBook", "publishedDate": "2022-02-22", "description": "サンプルBookです", "pageCount": 100, "isbn": "1111111111111"}'
 {
-  "title": "book1",
-  "_links": {
-    "self": {
-      "href": "http://localhost:8080/api/books/1"
+  "title" : "サンプルBook",
+  "publishedDate" : "2022-02-22",
+  "description" : "サンプルBookです",
+  "pageCount" : 100,
+  "isbn" : "1111111111111",
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/api/books/1"
     },
-    "book": {
-      "href": "http://localhost:8080/api/books/1"
+    "book" : {
+      "href" : "http://localhost:8080/api/books/1"
     },
-    "authors": {
-      "href": "http://localhost:8080/api/books/1/authors"
-    }
-  }
-}
-
-
-$ curl -s -X POST http://localhost:8080/api/books -H "Content-Type:application/json" -d '{"title": "book2"}'
-{
-  "title": "book2",
-  "_links": {
-    "self": {
-      "href": "http://localhost:8080/api/books/2"
-    },
-    "book": {
-      "href": "http://localhost:8080/api/books/2"
-    },
-    "authors": {
-      "href": "http://localhost:8080/api/books/2/authors"
+    "authors" : {
+      "href" : "http://localhost:8080/api/books/1/authors"
     }
   }
 }
 ```
 
-Author
+### 著者登録
 
 ```bash
-$ curl -s -X POST http://localhost:8080/api/authors -H "Content-Type:application/json" -d '{"name": "author1"}'
+$ curl -s -X POST http://localhost:8080/api/authors -H "Content-Type:application/json" \
+   -d '{"name": "著者1", "description": "専門は〜です"}'
 {
-  "name" : "author1",
+  "name" : "著者1",
+  "description" : "専門は〜です",
   "_links" : {
     "self" : {
       "href" : "http://localhost:8080/api/authors/1"
@@ -67,35 +55,98 @@ $ curl -s -X POST http://localhost:8080/api/authors -H "Content-Type:application
     }
   }
 }
+```
 
+### 書籍-著者の関連付け
 
-$ curl -s -X POST http://localhost:8080/api/authors -H "Content-Type:application/json" -d '{"name": "author2"}'
+1つの書籍に複数の著者を関連付ける事ができます。
+
+```bash
+$ echo "http://localhost:8080/api/authors/1\nhttp://localhost:8080/api/authors/2" | \
+   curl -s -X PUT http://localhost:8080/api/books/1/authors -H "Content-Type:text/uri-list" --data-binary @-
+
+$ curl -s http://localhost:8080/api/books/1/authors
 {
-  "name" : "author2",
+  "_embedded" : {
+    "authors" : [ {
+      "name" : "著者1",
+      "description" : "専門は〜です",
+      "_links" : {
+        "self" : {
+          "href" : "http://localhost:8080/api/authors/1"
+        },
+        "author" : {
+          "href" : "http://localhost:8080/api/authors/1"
+        },
+        "books" : {
+          "href" : "http://localhost:8080/api/authors/1/books"
+        }
+      }
+    }, {
+      "name" : "とても面白い作者",
+      "description" : "とても面白い本を書きます",
+      "_links" : {
+        "self" : {
+          "href" : "http://localhost:8080/api/authors/2"
+        },
+        "author" : {
+          "href" : "http://localhost:8080/api/authors/2"
+        },
+        "books" : {
+          "href" : "http://localhost:8080/api/authors/2/books"
+        }
+      }
+    } ]
+  },
   "_links" : {
     "self" : {
-      "href" : "http://localhost:8080/api/authors/2"
-    },
-    "author" : {
-      "href" : "http://localhost:8080/api/authors/2"
-    },
-    "books" : {
-      "href" : "http://localhost:8080/api/authors/2/books"
+      "href" : "http://localhost:8080/api/books/1/authors"
+    }
+  }
+}%
+```
+
+### 著者に紐付く書籍の取得
+
+著者名で検索後、該当リソースにアクセスする事により取得できます。
+
+```bash
+# name=著者
+$ curl -s "http://localhost:8080/api/authors/search/findByNameContaining?name=%E8%91%97%E8%80%85"
+{
+  "_embedded" : {
+    "authors" : [ {
+      "name" : "著者1",
+      "description" : "専門は〜です",
+      "_links" : {
+        "self" : {
+          "href" : "http://localhost:8080/api/authors/1"
+        },
+        "author" : {
+          "href" : "http://localhost:8080/api/authors/1"
+        },
+        "books" : {
+          "href" : "http://localhost:8080/api/authors/1/books"
+        }
+      }
+    } ]
+  },
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/api/authors/search/findByNameContaining?name=%E8%91%97%E8%80%85"
     }
   }
 }
-```
 
-### Read
-
-Book
-
-```bash
-$ curl -s http://localhost:8080/api/books
+$ curl -s http://localhost:8080/api/authors/1/books
 {
   "_embedded" : {
     "books" : [ {
-      "title" : "book1",
+      "title" : "サンプルBook",
+      "publishedDate" : "2022-02-22",
+      "description" : "サンプルBookです",
+      "pageCount" : 100,
+      "isbn" : "1111111111111",
       "_links" : {
         "self" : {
           "href" : "http://localhost:8080/api/books/1"
@@ -108,34 +159,92 @@ $ curl -s http://localhost:8080/api/books
         }
       }
     }, {
-      "title" : "book2",
+      "title" : "とても面白い本",
+      "publishedDate" : "2022-03-22",
+      "description" : "とても面白い本です",
+      "pageCount" : 200,
+      "isbn" : "2222222222222",
       "_links" : {
         "self" : {
-          "href" : "http://localhost:8080/api/books/2"
+          "href" : "http://localhost:8080/api/books/3"
         },
         "book" : {
-          "href" : "http://localhost:8080/api/books/2"
+          "href" : "http://localhost:8080/api/books/3"
         },
         "authors" : {
-          "href" : "http://localhost:8080/api/books/2/authors"
+          "href" : "http://localhost:8080/api/books/3/authors"
         }
       }
     } ]
   },
   "_links" : {
     "self" : {
-      "href" : "http://localhost:8080/api/books"
-    },
-    "profile" : {
-      "href" : "http://localhost:8080/api/profile/books"
+      "href" : "http://localhost:8080/api/authors/1/books"
     }
   }
 }
+```
 
+### 書籍検索
 
-$ curl -s http://localhost:8080/api/books/1
+以下の検索APIをサポートします。
+
+```bash
+$ curl -s http://localhost:8080/api/books/search
 {
-  "title" : "book1",
+  "_links" : {
+    "findByIsbn" : {
+      "href" : "http://localhost:8080/api/books/search/findByIsbn{?isbn}",
+      "templated" : true
+    },
+    "findByPublishedDateBetween" : {
+      "href" : "http://localhost:8080/api/books/search/findByPublishedDateBetween{?start,end}",
+      "templated" : true
+    },
+    "findByDescriptionContaining" : {
+      "href" : "http://localhost:8080/api/books/search/findByDescriptionContaining{?description}",
+      "templated" : true
+    },
+    "self" : {
+      "href" : "http://localhost:8080/api/books/search"
+    }
+  }
+}
+```
+
+### 著者検索
+
+以下の検索APIをサポートします。
+
+```bash
+$ curl -s http://localhost:8080/api/authors/search
+{
+  "_links" : {
+    "findByNameContaining" : {
+      "href" : "http://localhost:8080/api/authors/search/findByNameContaining{?name}",
+      "templated" : true
+    },
+    "findByDescriptionContaining" : {
+      "href" : "http://localhost:8080/api/authors/search/findByDescriptionContaining{?description}",
+      "templated" : true
+    },
+    "self" : {
+      "href" : "http://localhost:8080/api/authors/search"
+    }
+  }
+}
+```
+
+### 書籍更新
+
+```bash
+$ curl -s -X PATCH http://localhost:8080/api/books/1 -H "Content-Type:application/json" -d '{"description": "サンプルBookの改訂版です"}'
+{
+  "title" : "サンプルBook",
+  "publishedDate" : "2022-02-22",
+  "description" : "サンプルBookの改訂版です",
+  "pageCount" : 100,
+  "isbn" : "1111111111111",
   "_links" : {
     "self" : {
       "href" : "http://localhost:8080/api/books/1"
@@ -150,109 +259,13 @@ $ curl -s http://localhost:8080/api/books/1
 }
 ```
 
-Author
+### 著者更新
 
 ```bash
-$ curl -s http://localhost:8080/api/authors
+$ curl -s -X PATCH http://localhost:8080/api/authors/1 -H "Content-Type:application/json" -d '{"description": "専門はKotlinです"}'
 {
-  "_embedded" : {
-    "authors" : [ {
-      "name" : "author1",
-      "_links" : {
-        "self" : {
-          "href" : "http://localhost:8080/api/authors/1"
-        },
-        "author" : {
-          "href" : "http://localhost:8080/api/authors/1"
-        },
-        "books" : {
-          "href" : "http://localhost:8080/api/authors/1/books"
-        }
-      }
-    }, {
-      "name" : "author2",
-      "_links" : {
-        "self" : {
-          "href" : "http://localhost:8080/api/authors/2"
-        },
-        "author" : {
-          "href" : "http://localhost:8080/api/authors/2"
-        },
-        "books" : {
-          "href" : "http://localhost:8080/api/authors/2/books"
-        }
-      }
-    } ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/authors"
-    },
-    "profile" : {
-      "href" : "http://localhost:8080/api/profile/authors"
-    }
-  }
-}
-
-
-$ curl -s http://localhost:8080/api/authors/1
-{
-  "name" : "author1",
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/authors/1"
-    },
-    "author" : {
-      "href" : "http://localhost:8080/api/authors/1"
-    },
-    "books" : {
-      "href" : "http://localhost:8080/api/authors/1/books"
-    }
-  }
-}
-
-
-$ curl -s http://localhost:8080/api/authors/1/books
-{
-  "_embedded" : {
-    "books" : [ ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/authors/1/books"
-    }
-  }
-}
-```
-
-### Update
-
-Book
-
-```bash
-$ curl -s -X PATCH http://localhost:8080/api/books/1 -H "Content-Type:application/json" -d '{"title": "modified_book1"}'
-{
-  "title" : "modified_book1",
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/books/1"
-    },
-    "book" : {
-      "href" : "http://localhost:8080/api/books/1"
-    },
-    "authors" : {
-      "href" : "http://localhost:8080/api/books/1/authors"
-    }
-  }
-}
-```
-
-Author
-
-```bash
-$ curl -s -X PATCH http://localhost:8080/api/authors/1 -H "Content-Type:application/json" -d '{"name": "modified_author1"}'
-{
-  "name" : "modified_author1",
+  "name" : "著者1",
+  "description" : "専門はKotlinです",
   "_links" : {
     "self" : {
       "href" : "http://localhost:8080/api/authors/1"
@@ -267,160 +280,15 @@ $ curl -s -X PATCH http://localhost:8080/api/authors/1 -H "Content-Type:applicat
 }
 ```
 
-Association between books and authors
+## タスク
 
-```bash
-$ echo "http://localhost:8080/api/authors/1\nhttp://localhost:8080/api/authors/2" | \
-   curl -s -X PUT http://localhost:8080/api/books/1/authors -H "Content-Type:text/uri-list" --data-binary @-
-
-
-$ curl -s http://localhost:8080/api/books/1/authors
-{
-  "_embedded" : {
-    "authors" : [ {
-      "name" : "author2",
-      "_links" : {
-        "self" : {
-          "href" : "http://localhost:8080/api/authors/2"
-        },
-        "author" : {
-          "href" : "http://localhost:8080/api/authors/2"
-        },
-        "books" : {
-          "href" : "http://localhost:8080/api/authors/2/books"
-        }
-      }
-    }, {
-      "name" : "modified_author1",
-      "_links" : {
-        "self" : {
-          "href" : "http://localhost:8080/api/authors/1"
-        },
-        "author" : {
-          "href" : "http://localhost:8080/api/authors/1"
-        },
-        "books" : {
-          "href" : "http://localhost:8080/api/authors/1/books"
-        }
-      }
-    } ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/books/1/authors"
-    }
-  }
-}
-```
-
-### Delete
-
-Book
-
-```bash
-$ curl -s http://localhost:8080/api/books/3
-{
-  "title" : "book3",
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/books/3"
-    },
-    "book" : {
-      "href" : "http://localhost:8080/api/books/3"
-    },
-    "authors" : {
-      "href" : "http://localhost:8080/api/books/3/authors"
-    }
-  }
-}
-
-
-$ curl -s -X DELETE http://localhost:8080/api/books/3
-
-
-$ curl -s http://localhost:8080/api/books/3
-```
-
-Author
-
-```bash
-$ curl -s http://localhost:8080/api/authors/3
-{
-  "name" : "author3",
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/authors/3"
-    },
-    "author" : {
-      "href" : "http://localhost:8080/api/authors/3"
-    },
-    "books" : {
-      "href" : "http://localhost:8080/api/authors/3/books"
-    }
-  }
-}
-
-
-$ curl -s -X DELETE http://localhost:8080/api/authors/3
-
-
-$ curl -s http://localhost:8080/api/authors/3
-```
-
-Association between books and authors
-
-```bash
-$ curl -s http://localhost:8080/api/books/3/authors
-{
-  "_embedded" : {
-    "authors" : [ {
-      "name" : "author3",
-      "_links" : {
-        "self" : {
-          "href" : "http://localhost:8080/api/authors/3"
-        },
-        "author" : {
-          "href" : "http://localhost:8080/api/authors/3"
-        },
-        "books" : {
-          "href" : "http://localhost:8080/api/authors/3/books"
-        }
-      }
-    } ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/books/3/authors"
-    }
-  }
-}
-
-
-$ curl -s -X DELETE http://localhost:8080/api/books/3/authors/3
-
-
-$ curl -s http://localhost:8080/api/books/3/authors
-{
-  "_embedded" : {
-    "authors" : [ ]
-  },
-  "_links" : {
-    "self" : {
-      "href" : "http://localhost:8080/api/books/3/authors"
-    }
-  }
-}
-```
-
-## Tasks
-
-### Run a server
+### サーバ起動
 
 ```bash
 $ ./gradlew bootRun
 ```
 
-### Run tests
+### テスト実行
 
 ```bash
 $ ./gradlew test
@@ -428,5 +296,9 @@ $ ./gradlew test
 
 ## TODOs
 
-- Persist data
-   - Now, data in h2 database is clear on server shutdown.
+- MySQL/PostgreSQLを使う
+   - 組み込みのh2 databaseを使ったため、サーバの停止でデータが消える
+- Controllerレベルでのテスト作成
+   - Spring Data RESTを使った状態で上手くテストを作成できなかった
+- 著者に紐付いた書籍取得を1つのAPIで完結させる
+   - 現状では著者取得、紐付いた書籍取得で2回のAPI実行が必要
