@@ -40,4 +40,18 @@ class RepositoriesTests @Autowired constructor(
         assertThat(found).isEqualTo(author2)
         assertThat(found).isNotEqualTo(author1)
     }
+
+    @Test
+    fun `When findByNameStartingWith then return list of authors with startsWith condition`() {
+        val author1 = Author(name = "author1")
+        val author2 = Author(name = "author2")
+        val author3 = Author(name = "another_prefix_author3")
+        entityManager.persist(author1)
+        entityManager.persist(author2)
+        entityManager.persist(author3)
+        entityManager.flush()
+
+        val found = authorRepository.findByNameStartingWith("author")
+        assertThat(found).isEqualTo(listOf(author1, author2))
+    }
 }
